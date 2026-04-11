@@ -1,0 +1,3 @@
+{
+  "extends": "@stronghold/config/tsconfig.base.json"
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@stronghold/api",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@trpc/client": "catalog:",
+    "@trpc/server": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@stronghold/config": "workspace:*",
+    "elysia": "catalog:",
+    "typescript": "^5"
+  }
+}
