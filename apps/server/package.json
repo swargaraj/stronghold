@@ -34,6 +34,6 @@
     "@types/bun": "catalog:",
     "@types/logform": "^1.10.1",
     "tsdown": "^0.16.5",
-    "typescript": "^5"
+    "typescript": "^6"
   }
 }
