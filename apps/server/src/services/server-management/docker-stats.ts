@@ -33,7 +33,7 @@ function parsePercent(value: string | undefined) {
   }
 
   const parsed = Number(value.replace("%", ""));
-  return Number.isFinite(parsed) ? Math.round(parsed * 100) : null;
+  return Number.isFinite(parsed) ? Math.round(parsed) : null;
 }
 
 function parseSize(value: string | undefined) {
@@ -73,10 +73,17 @@ function dockerStatsUnavailable(error: unknown) {
 
 async function getPlayersOnline(server: Server) {
   try {
-    const result = await runDocker(["exec", server.containerId ?? server.containerName, "rcon-cli", "list"]);
+    const result = await runDocker([
+      "exec",
+      server.containerId ?? server.containerName,
+      "rcon-cli",
+      "list",
+    ]);
     const match = /There are (\d+) of a max/i.exec(result.stdout);
     const playersOnline = match?.[1] ? Number(match[1]) : null;
-    const namesText = result.stdout.includes(":") ? result.stdout.split(":").slice(1).join(":").trim() : "";
+    const namesText = result.stdout.includes(":")
+      ? result.stdout.split(":").slice(1).join(":").trim()
+      : "";
     const playerNames = namesText
       ? namesText
           .split(",")

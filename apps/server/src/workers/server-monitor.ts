@@ -6,9 +6,8 @@ import {
 import { collectDockerStats } from "@/services/server-management/docker-stats";
 import { reconcileServer } from "@/services/server-management/sync";
 import type { Server } from "@/services/server-management/types";
-
-const monitorIntervalMs = 30_000;
-const statsRetentionMs = 7 * 24 * 60 * 60 * 1000;
+import { logger } from "@/lib/logger";
+import { env } from "@stronghold/env/server";
 
 let monitorTimer: Timer | undefined;
 let isCollecting = false;
@@ -17,8 +16,18 @@ function isRunningServer(server: Server | null): server is Server {
   return server?.status === "running";
 }
 
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`Timeout after ${ms}ms`)), ms),
+    ),
+  ]);
+}
+
 async function collectServerSnapshot() {
   if (isCollecting) {
+    logger.warn("Server monitor skipped (previous run still active)");
     return;
   }
 
@@ -26,22 +35,32 @@ async function collectServerSnapshot() {
 
   try {
     const rows = await listServerRows();
-    const reconciled = await Promise.all(rows.map((server) => reconcileServer(server)));
+    const reconciled = await Promise.all(
+      rows.map((server) => reconcileServer(server)),
+    );
     const activeServers = reconciled.filter(isRunningServer);
 
-    await Promise.all(
+    await Promise.allSettled(
       activeServers.map(async (server) => {
-        const stats = await collectDockerStats(server);
-        await insertServerStatsSnapshot({
-          serverId: server.id,
-          ...stats,
-        });
+        try {
+          const stats = await withTimeout(
+            collectDockerStats(server),
+            env.STATS_PULL_TIMEOUT,
+          );
+
+          await insertServerStatsSnapshot({
+            serverId: server.id,
+            ...stats,
+          });
+        } catch (err) {
+          logger.warn(`Failed to collect stats for server ${server.id}`, err);
+        }
       }),
     );
 
-    await pruneServerStatsOlderThan(new Date(Date.now() - statsRetentionMs));
+    await pruneServerStatsOlderThan(new Date(Date.now() - env.STATS_RETENTION_MS));
   } catch (error) {
-    console.error("Server monitor failed", error);
+    logger.error("Server monitor failed", error);
   } finally {
     isCollecting = false;
   }
@@ -55,5 +74,5 @@ export function startServerMonitor() {
   void collectServerSnapshot();
   monitorTimer = setInterval(() => {
     void collectServerSnapshot();
-  }, monitorIntervalMs);
+  }, env.MONITOR_INTERVAL_MS);
 }

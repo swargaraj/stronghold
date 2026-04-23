@@ -81,11 +81,19 @@ export async function createContainer(server: Server) {
 }
 
 export async function inspectContainer(server: Server) {
-  const result = await runDocker(["inspect", "--format", "{{json .State}}", server.containerId ?? server.containerName]);
+  const result = await runDocker([
+    "inspect",
+    "--format",
+    "{{json .State}}",
+    server.containerId ?? server.containerName,
+  ]);
   return JSON.parse(result.stdout) as DockerState;
 }
 
-export async function runContainerAction(server: Server, action: "start" | "stop" | "restart" | "kill") {
+export async function runContainerAction(
+  server: Server,
+  action: "start" | "stop" | "restart" | "kill",
+) {
   await runDocker([action, server.containerId ?? server.containerName]);
 }
 

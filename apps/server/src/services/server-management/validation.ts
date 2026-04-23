@@ -80,14 +80,20 @@ async function assertHostPortsFree(ports: PortMapping[]) {
   }
 }
 
-function resolveRequestPorts(input: Pick<CreateServerInput, "ports" | "hostPort" | "containerPort">) {
+function resolveRequestPorts(
+  input: Pick<CreateServerInput, "ports" | "hostPort" | "containerPort">,
+) {
   return input.ports ?? [getPrimaryPortMapping(input)];
 }
 
 function assertCompatibleConfig(input: CreateServerInput | UpdateServerInput) {
   const resolvedServerType = resolveServerType(input);
 
-  if (input.serverPlatform === "BEDROCK" && input.softwareType && input.softwareType !== "VANILLA") {
+  if (
+    input.serverPlatform === "BEDROCK" &&
+    input.softwareType &&
+    input.softwareType !== "VANILLA"
+  ) {
     badRequest("Bedrock only supports the vanilla software type");
   }
 
@@ -95,7 +101,11 @@ function assertCompatibleConfig(input: CreateServerInput | UpdateServerInput) {
     badRequest("SNAPSHOT is only available for Java vanilla servers");
   }
 
-  if (resolvedServerType === "VANILLA" && input.extraEnv && ("MODPACK" in input.extraEnv || "CF_API_KEY" in input.extraEnv)) {
+  if (
+    resolvedServerType === "VANILLA" &&
+    input.extraEnv &&
+    ("MODPACK" in input.extraEnv || "CF_API_KEY" in input.extraEnv)
+  ) {
     badRequest("Modpack environment variables require a modded server type");
   }
 }
@@ -158,7 +168,8 @@ export async function validateExposePortsRequest(server: Server, input: ExposeSe
 
   for (const mapping of input.ports) {
     const exists = currentPorts.find(
-      (current) => current.protocol === mapping.protocol && current.containerPort === mapping.containerPort,
+      (current) =>
+        current.protocol === mapping.protocol && current.containerPort === mapping.containerPort,
     );
 
     if (!exists && mapping.hostPort !== undefined) {
@@ -173,7 +184,10 @@ export async function validateExposePortsRequest(server: Server, input: ExposeSe
   return reconciled;
 }
 
-export async function validateUnexposePortsRequest(server: Server, input: UnexposeServerPortsInput) {
+export async function validateUnexposePortsRequest(
+  server: Server,
+  input: UnexposeServerPortsInput,
+) {
   const reconciled = await reconcileServerOrThrow(server);
   assertServerIsMutable(reconciled);
 

@@ -9,9 +9,7 @@ export {
 export { getServerDetails, getServerStatsHistory } from "./details";
 export { serverService } from "./service";
 export {
-  isSupportedServerPlatform,
   isSupportedSoftware,
-  isSupportedVersionType,
   listSoftware,
   listVersions,
   serverPlatformOptions,

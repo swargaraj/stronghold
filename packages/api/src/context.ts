@@ -5,10 +5,7 @@ export type CreateContextOptions = {
 };
 
 export async function createContext({ context: _context }: CreateContextOptions) {
-  return {
-    auth: null,
-    session: null,
-  };
+  return {};
 }
 
 export type Context = Awaited<ReturnType<typeof createContext>>;

@@ -18,7 +18,10 @@ export async function provisionServer(server: Server, autoStart: boolean) {
   }
 }
 
-export async function runLifecycleJob(server: Server, action: "start" | "stop" | "restart" | "kill") {
+export async function runLifecycleJob(
+  server: Server,
+  action: "start" | "stop" | "restart" | "kill",
+) {
   try {
     await runContainerAction(server, action);
     await reconcileServer(server);

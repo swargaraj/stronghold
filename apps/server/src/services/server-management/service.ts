@@ -8,7 +8,12 @@ import {
   setServerStatus,
   updateServerRow,
 } from "./repository";
-import type { CreateServerInput, ExposeServerPortsInput, UnexposeServerPortsInput, UpdateServerInput } from "./schemas";
+import type {
+  CreateServerInput,
+  ExposeServerPortsInput,
+  UnexposeServerPortsInput,
+  UpdateServerInput,
+} from "./schemas";
 import { deleteServerJob, provisionServer, recreateServer, runLifecycleJob } from "./jobs";
 import { reconcileServer, reconcileServerOrThrow } from "./sync";
 import type { ServerStatus } from "./types";
@@ -100,7 +105,8 @@ export const serverService = {
 
     for (const mapping of input.ports) {
       const index = mergedPorts.findIndex(
-        (current) => current.protocol === mapping.protocol && current.containerPort === mapping.containerPort,
+        (current) =>
+          current.protocol === mapping.protocol && current.containerPort === mapping.containerPort,
       );
 
       if (index >= 0) {
@@ -132,7 +138,8 @@ export const serverService = {
     const nextPorts = parsePorts(reconciled.portsJson, reconciled).filter(
       (mapping) =>
         !input.ports.some(
-          (target) => target.protocol === mapping.protocol && target.containerPort === mapping.containerPort,
+          (target) =>
+            target.protocol === mapping.protocol && target.containerPort === mapping.containerPort,
         ),
     );
 

@@ -2,11 +2,7 @@ import { TRPCError } from "@trpc/server";
 
 import { DockerCommandError } from "../docker";
 import { inspectContainer, removeContainer, toServerStatus } from "./containers";
-import {
-  deleteServerRow,
-  markServerMissing,
-  setServerSyncedState,
-} from "./repository";
+import { deleteServerRow, markServerMissing, setServerSyncedState } from "./repository";
 import type { Server } from "./types";
 import { dockerNotFound, isPendingStatus, runBackground } from "./utils";
 
@@ -32,8 +28,9 @@ export async function reconcileServer(server: Server) {
     }
 
     try {
-      await inspectContainer(server);
-      return server;
+      const state = await inspectContainer(server);
+      const status = toServerStatus(state);
+      return setServerSyncedState(server, status, state.Error || null);
     } catch (error) {
       if (dockerNotFound(error)) {
         const missing = await markServerMissing(server);

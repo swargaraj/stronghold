@@ -65,20 +65,25 @@ export const serverPlatformSchema = z.enum(serverPlatformOptions).default("JAVA"
 
 export const softwareTypeSchema = z.enum(javaSoftwareOptions).default("VANILLA");
 
-export const extraEnvSchema = z.record(
-  z.string().min(1).regex(/^[A-Z0-9_]+$/),
-  z.string().max(500),
-).superRefine((value, context) => {
-  for (const key of Object.keys(value)) {
-    if (managedEnvKeys.has(key)) {
-      context.addIssue({
-        code: "custom",
-        message: `${key} is managed by Stronghold and cannot be set in extraEnv`,
-        path: [key],
-      });
+export const extraEnvSchema = z
+  .record(
+    z
+      .string()
+      .min(1)
+      .regex(/^[A-Z0-9_]+$/),
+    z.string().max(500),
+  )
+  .superRefine((value, context) => {
+    for (const key of Object.keys(value)) {
+      if (managedEnvKeys.has(key)) {
+        context.addIssue({
+          code: "custom",
+          message: `${key} is managed by Stronghold and cannot be set in extraEnv`,
+          path: [key],
+        });
+      }
     }
-  }
-});
+  });
 
 export const portProtocolSchema = z.enum(["tcp", "udp"]).default("tcp");
 
@@ -148,7 +153,11 @@ export const portsSchema = z
 
 const serverConfigSchema = z.object({
   name: z.string().trim().min(1).max(80),
-  image: z.string().trim().regex(dockerImagePattern, "Invalid Docker image reference").default(defaultImage),
+  image: z
+    .string()
+    .trim()
+    .regex(dockerImagePattern, "Invalid Docker image reference")
+    .default(defaultImage),
   hostPort: portNumberSchema,
   containerPort: portNumberSchema.default(25565),
   ports: portsSchema.optional(),
@@ -171,11 +180,15 @@ const serverConfigSchema = z.object({
   extraEnv: extraEnvSchema.default({}),
 });
 
-export const createServerSchema = serverConfigSchema.extend({
+const managedServerConfigSchema = serverConfigSchema.omit({
+  rconPassword: true,
+});
+
+export const createServerSchema = managedServerConfigSchema.extend({
   autoStart: z.boolean().default(true),
 });
 
-export const updateServerSchema = serverConfigSchema
+export const updateServerSchema = managedServerConfigSchema
   .omit({ hostPort: true, ports: true })
   .partial()
   .extend({

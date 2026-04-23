@@ -6,7 +6,15 @@ import { desc, eq, lt } from "drizzle-orm";
 import type { CreateServerInput, UpdateServerInput } from "./schemas";
 import { resolveServerType } from "./catalog";
 import type { Server, ServerStat, ServerStatus } from "./types";
-import { createId, getPrimaryPortMapping, parsePorts, serializeExtraEnv, serializePorts, slugify } from "./utils";
+import {
+  createId,
+  generateSecret,
+  getPrimaryPortMapping,
+  parsePorts,
+  serializeExtraEnv,
+  serializePorts,
+  slugify,
+} from "./utils";
 
 function resolveInputPorts(input: Pick<CreateServerInput, "ports" | "hostPort" | "containerPort">) {
   return input.ports ?? [getPrimaryPortMapping(input)];
@@ -41,6 +49,7 @@ export async function insertServer(input: CreateServerInput) {
   const now = new Date();
   const ports = resolveInputPorts(input);
   const [primaryPort] = ports;
+  const rconPassword = generateSecret(24);
 
   const [server] = await db
     .insert(servers)
@@ -62,7 +71,7 @@ export async function insertServer(input: CreateServerInput) {
       gameMode: input.gameMode,
       onlineMode: input.onlineMode,
       enableRcon: true,
-      rconPassword: input.rconPassword,
+      rconPassword,
       extraEnvJson: serializeExtraEnv(input.extraEnv),
       status: "creating",
       createdAt: now,
@@ -102,7 +111,7 @@ export async function updateServerRow(server: Server, input: UpdateServerInput) 
       gameMode: input.gameMode ?? server.gameMode,
       onlineMode: input.onlineMode ?? server.onlineMode,
       enableRcon: true,
-      rconPassword: input.rconPassword ?? server.rconPassword,
+      rconPassword: server.rconPassword,
       extraEnvJson: input.extraEnv ? serializeExtraEnv(input.extraEnv) : server.extraEnvJson,
       updatedAt: new Date(),
     })
@@ -152,7 +161,11 @@ export async function assertHostPortAvailable(hostPort: number, excludeId?: stri
   }
 }
 
-export async function setServerStatus(id: string, status: ServerStatus, statusMessage: string | null = null) {
+export async function setServerStatus(
+  id: string,
+  status: ServerStatus,
+  statusMessage: string | null = null,
+) {
   const [updated] = await db
     .update(servers)
     .set({
@@ -181,7 +194,11 @@ export async function setServerContainerCreated(server: Server, containerId: str
   return updated ?? server;
 }
 
-export async function setServerSyncedState(server: Server, status: ServerStatus, statusMessage: string | null) {
+export async function setServerSyncedState(
+  server: Server,
+  status: ServerStatus,
+  statusMessage: string | null,
+) {
   const [updated] = await db
     .update(servers)
     .set({

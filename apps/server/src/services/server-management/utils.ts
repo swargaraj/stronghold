@@ -17,6 +17,12 @@ export function createId() {
   return crypto.randomUUID();
 }
 
+export function generateSecret(length = 32) {
+  return Array.from(crypto.getRandomValues(new Uint8Array(length)), (value) =>
+    value.toString(16).padStart(2, "0"),
+  ).join("");
+}
+
 export function parseExtraEnv(value: string) {
   const parsed: unknown = JSON.parse(value);
   return extraEnvSchema.parse(parsed);
@@ -35,7 +41,10 @@ export function getPrimaryPortMapping(server: Pick<Server, "hostPort" | "contain
   };
 }
 
-export function parsePorts(value: string, fallback: Pick<Server, "hostPort" | "containerPort">): PortMapping[] {
+export function parsePorts(
+  value: string,
+  fallback: Pick<Server, "hostPort" | "containerPort">,
+): PortMapping[] {
   const parsed: unknown = JSON.parse(value);
 
   if (Array.isArray(parsed) && parsed.length === 0) {
