@@ -30,6 +30,6 @@
   "devDependencies": {
     "@stronghold/config": "workspace:*",
     "drizzle-kit": "^0.31.8",
-    "typescript": "^5"
+    "typescript": "^6"
   }
 }
